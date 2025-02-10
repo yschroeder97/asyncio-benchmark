@@ -9,11 +9,9 @@
 #include <thread>
 
 using asio::ip::tcp;
-constexpr std::string host = "localhost";
+constexpr std::string host = "127.0.0.1";
 constexpr uint16_t port = 12345;
 constexpr size_t FOUR_KiB = 4 * 1024;
-
-static
 
 auto info() { return std::osyncstream(std::cout); }
 
@@ -23,7 +21,7 @@ asio::awaitable<void> send(tcp::socket socket) {
     std::vector buf(FOUR_KiB, 'A');
     while (true) {
         [[maybe_unused]] auto [ec, n] =
-                co_await async_write(socket, std::vector(100, asio::buffer(buf)), asio::as_tuple);
+                co_await async_write(socket, asio::const_buffer(buf.data(), buf.size()), asio::as_tuple);
 
         if (ec) {
             socket.shutdown(tcp::socket::shutdown_both, ec);
@@ -102,7 +100,7 @@ void blocking_client(const bool &stopped, uint64_t &bytesRead) {
             numReceivedBytes += bufferSizeReceived;
             if (bufferSizeReceived == -1) {
                 /// if read method returned -1 an error occurred during read.
-                // info() << "An error occurred while reading from socket. Error: " << strerror(errno);
+                info() << "An error occurred while reading from socket. Error: " << strerror(errno);
                 break;
             }
             if (bufferSizeReceived == 0) {
